@@ -105,7 +105,7 @@ namespace VTools.RandomService
                     GameObject newBlock = Instantiate(_prefab);
                     //newBlock.transform.localScale = new Vector3(1, val*_accentuation_denivler, 1);
                     //newBlock.transform.position = new Vector3(x, (val * _accentuation_denivler) /2, y);
-                    if(val > 1)
+                    if(val > 0.2)
                         newBlock.transform.position = new Vector3(x, valInt, y);
                     else
                         newBlock.transform.position = new Vector3(x, 1, y);
