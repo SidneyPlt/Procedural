@@ -1,2 +1,2 @@
-# Procedural
+# Procedual
 semaine théorique
