@@ -33,9 +33,9 @@ namespace VTools.RandomService
 
 
         [Header("map parametre")]
-        [SerializeField] float _water = 0.15f;
-        [SerializeField] float _sand = 0.45f;
-        [SerializeField] float _grass = 0.75f;
+        [SerializeField] float _water = -0.7f;
+        [SerializeField] float _sand = -0.1f;
+        [SerializeField] float _grass = 0.8f;
         [SerializeField] float _rock = 1.0f;
 
 

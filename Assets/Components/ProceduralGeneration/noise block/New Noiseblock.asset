@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: New Noiseblock
   m_EditorClassIdentifier: 
   _maxSteps: 1000
-  _accentuation_denivler: 6
+  _accentuation_denivler: 20
   _prefab: {fileID: 2487062154611430380, guid: 342ec10bed3ce4e40aa2a16828c88f0e, type: 3}
   _nois_type: 0
   _rota_3d: 0
@@ -38,15 +38,15 @@ MonoBehaviour:
     key5: {r: 0, g: 0, b: 0, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 13107
-    ctime1: 26214
-    ctime2: 39321
-    ctime3: 52428
+    ctime0: 4626
+    ctime1: 9638
+    ctime2: 53777
+    ctime3: 62258
     ctime4: 65535
     ctime5: 0
     ctime6: 0
     ctime7: 0
-    atime0: 0
+    atime0: 4626
     atime1: 65535
     atime2: 0
     atime3: 0

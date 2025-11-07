@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 
+
 namespace VTools.RandomService
 {
     [CreateAssetMenu(menuName = "Procedural Generation Method/nois generator 3d block")]
@@ -100,9 +101,14 @@ namespace VTools.RandomService
                 for (int y = 0; y < Grid.Lenght; y++)
                 {
                     float val = noiseData[x, y];
+                    int valInt = (int)(val*10);
                     GameObject newBlock = Instantiate(_prefab);
-                    newBlock.transform.localScale = new Vector3(1, val*_accentuation_denivler, 1);
-                    newBlock.transform.position = new Vector3(x, (val * _accentuation_denivler) /2, y);
+                    //newBlock.transform.localScale = new Vector3(1, val*_accentuation_denivler, 1);
+                    //newBlock.transform.position = new Vector3(x, (val * _accentuation_denivler) /2, y);
+                    if(val > 1)
+                        newBlock.transform.position = new Vector3(x, valInt, y);
+                    else
+                        newBlock.transform.position = new Vector3(x, 1, y);
                     newBlock.GetComponent<Renderer>().material.color = _gradient.Evaluate(val);
                 }
             }
