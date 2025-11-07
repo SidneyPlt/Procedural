@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a50a25fc893db484f9d85904263d7a12, type: 3}
+  m_Name: New Nois Generation
+  m_EditorClassIdentifier: 
+  _maxSteps: 2
+  _nois_type: 0
+  _rota_3d: 0
+  _speed: 2
+  _frequency: 0.015
+  _fractal_type: 3
+  _octave: 3
+  _lacunarity: 2
+  _gain: 0.5
+  _weigther: 0
+  _ping_pong: 2
+  _distance_function: 0
+  _return_type: 1
+  _jiter: 1
+  _water: 0.15
+  _sand: 0.45
+  _grass: 0.75
+  _rock: 1
