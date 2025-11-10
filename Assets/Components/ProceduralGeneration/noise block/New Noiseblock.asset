@@ -13,12 +13,16 @@ MonoBehaviour:
   m_Name: New Noiseblock
   m_EditorClassIdentifier: 
   _maxSteps: 1000
-  _accentuation_denivler: 20
-  _prefab: {fileID: 2487062154611430380, guid: 342ec10bed3ce4e40aa2a16828c88f0e, type: 3}
+  _accentuation_denivler: 9
+  _waterPrefab: {fileID: 6583623941741894297, guid: 4ee5b6aa2a8a20f4a8459273e551e116, type: 3}
+  _sandPrefab: {fileID: 6583623941741894297, guid: 3f1aeff256592bb41ada4518508f6ad1, type: 3}
+  _grassPrefab: {fileID: 6583623941741894297, guid: 65b4c27641ac913428f4f002d10a19a6, type: 3}
+  _arbre: {fileID: 100000, guid: 086866415dea3c64bb043c7b9c5d5a28, type: 3}
+  _herbe: {fileID: 100000, guid: 2b44582523d7fdf48ae9a30dd4e38897, type: 3}
   _nois_type: 0
   _rota_3d: 0
   _speed: 1
-  _frequency: 0.025
+  _frequency: 0.03
   _fractal_type: 0
   _octave: 3
   _lacunarity: 2
@@ -33,16 +37,16 @@ MonoBehaviour:
     key0: {r: 0, g: 0.021914482, b: 1, a: 1}
     key1: {r: 0.91823894, g: 0.85902274, b: 0.50532013, a: 1}
     key2: {r: 0.15010698, g: 0.5345911, b: 0, a: 0}
-    key3: {r: 0.31446534, g: 0.31446534, b: 0.31446534, a: 0}
-    key4: {r: 1, g: 1, b: 1, a: 0}
+    key3: {r: 0, g: 0, b: 0, a: 0}
+    key4: {r: 0, g: 0, b: 0, a: 0}
     key5: {r: 0, g: 0, b: 0, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
     ctime0: 13107
     ctime1: 26214
-    ctime2: 52428
-    ctime3: 62258
-    ctime4: 65535
+    ctime2: 65535
+    ctime3: 0
+    ctime4: 0
     ctime5: 0
     ctime6: 0
     ctime7: 0
@@ -56,5 +60,5 @@ MonoBehaviour:
     atime7: 0
     m_Mode: 1
     m_ColorSpace: -1
-    m_NumColorKeys: 5
+    m_NumColorKeys: 3
     m_NumAlphaKeys: 2

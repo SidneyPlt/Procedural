@@ -17,7 +17,13 @@ namespace VTools.RandomService
         float[,] noiseData;
         [Header("map param")]
         [SerializeField][Range(0, 50)] int _accentuation_denivler = 2;
-        [SerializeField] GameObject _prefab = null;
+        [SerializeField] GameObject _waterPrefab = null;
+        [SerializeField] GameObject _sandPrefab = null;
+        [SerializeField] GameObject _grassPrefab = null;
+        [SerializeField] GameObject _dirtPrefab = null;
+        [SerializeField] GameObject _arbre = null;
+        [SerializeField] GameObject _herbe = null;
+
         [NonSerialized] GameObject[] _map_block_list = null;
 
 
@@ -95,21 +101,49 @@ namespace VTools.RandomService
 
         private void GenerateMap()
         {
+            GameObject Water = Instantiate(_waterPrefab);
+            Water.transform.localScale = new Vector3(Grid.Width, 1, Grid.Lenght);
+            Water.transform.position = new Vector3(Grid.Width / 2, -4, Grid.Lenght / 2);
 
             for (int x = 0; x < Grid.Width; x++)
             {
                 for (int y = 0; y < Grid.Lenght; y++)
                 {
                     float val = noiseData[x, y];
-                    int valInt = (int)(val*10);
-                    GameObject newBlock = Instantiate(_prefab);
-                    //newBlock.transform.localScale = new Vector3(1, val*_accentuation_denivler, 1);
-                    //newBlock.transform.position = new Vector3(x, (val * _accentuation_denivler) /2, y);
-                    if(val > 0.2)
-                        newBlock.transform.position = new Vector3(x, valInt, y);
-                    else
-                        newBlock.transform.position = new Vector3(x, 1, y);
-                    newBlock.GetComponent<Renderer>().material.color = _gradient.Evaluate(val);
+
+                    if (val > -0.4)
+                    {
+                        int valInt = (int)(val * 10);
+                        GameObject blockPrefab = val > -0.2 ? _grassPrefab : _sandPrefab;
+
+                        int chanceArbre = RandomService.Range(1, 32);
+                        if (blockPrefab == _grassPrefab && chanceArbre == 1)
+                        {
+                            float posArbre = ((float)valInt+1) - 0.2f;
+                            Instantiate(_arbre);
+                            _arbre.transform.localPosition = new Vector3(x, posArbre, y);
+                            _herbe.transform.localScale = new Vector3(1, 2.5f, 1);
+                        }
+                        else if(blockPrefab == _grassPrefab && chanceArbre != 1)
+                        {
+                            int chanceherbe = RandomService.Range(1, 10);
+                            if (chanceherbe == 1)
+                            {
+                                float posherbe = ((float)valInt) + 0.5f;
+                                Instantiate(_herbe);
+                                _herbe.transform.localPosition = new Vector3(x, posherbe, y);
+                                _herbe.transform.localScale = new Vector3(2.5f, 2.2f, 2.5f);
+                                _herbe.transform.localRotation = new Quaternion(0, RandomService.Range(0, 359), 0, 0);
+                            }
+                            
+                        }
+
+                        for (int height = valInt; height >= valInt - 1; height--)
+                        {
+                            GameObject newBlock = Instantiate(blockPrefab);
+                            newBlock.transform.position = new Vector3(x, height, y);
+                        }
+                    }
                 }
             }
         }
