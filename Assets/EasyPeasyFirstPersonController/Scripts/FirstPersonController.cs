@@ -65,6 +65,11 @@ public partial class FirstPersonController : MonoBehaviour
     private float slideSpeedVelocity;
     private float currentTiltAngle;
     private float tiltVelocity;
+    [Header("Creative Mode Settings")]
+    [SerializeField] private bool isCreativeMode = false;
+    [SerializeField] private bool isFlying = false;
+    private float lastSpacePressTime = 0f;
+    private float doubleTapThreshold = 0.5f;
 
     public float CurrentCameraHeight => isCrouching || isSliding ? crouchCameraHeight : originalCameraParentHeight;
 
@@ -227,9 +232,24 @@ public partial class FirstPersonController : MonoBehaviour
 
     private void HandleMovement()
     {
+        if (Input.GetKeyDown(KeyCode.Semicolon))
+        {
+            if (!isCreativeMode)
+                Debug.Log("Mode créatif activé");
+            else
+                Debug.Log("Mode créatif désactivé");
+            isCreativeMode = !isCreativeMode;
+            isFlying = false;
+
+            if (!isCreativeMode && isGrounded)
+            {
+                moveDirection.y = -2f;
+            }
+        }
+
         moveInput.x = Input.GetAxis("Horizontal");
         moveInput.y = Input.GetAxis("Vertical");
-        isSprinting = canSprint && Input.GetKey(KeyCode.Q) && moveInput.y > 0.1f && isGrounded && !isCrouching && !isSliding;
+        isSprinting = canSprint && Input.GetKey(KeyCode.Q) && moveInput.y > 0.1f && !isCrouching && !isSliding;
 
         float currentSpeed = isCrouching ? crouchSpeed : (isSprinting ? sprintSpeed : walkSpeed);
         if (!isMove) currentSpeed = 0f;
@@ -238,6 +258,78 @@ public partial class FirstPersonController : MonoBehaviour
         Vector3 moveVector = transform.TransformDirection(direction) * currentSpeed;
         moveVector = Vector3.ClampMagnitude(moveVector, currentSpeed);
 
+
+        if (isCreativeMode)
+        {
+            HandleCreativeMovement(moveVector);
+        }
+        else
+        {
+            HandleSurvivalMovement(moveVector);
+        }
+
+        if (!isSliding)
+        {
+            characterController.Move(moveDirection * Time.deltaTime);
+        }
+    }
+
+    private void HandleCreativeMovement(Vector3 moveVector)
+    {
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            if (Time.time - lastSpacePressTime < doubleTapThreshold)
+            {
+                isFlying = !isFlying;
+                if (isFlying == true)
+                    Debug.Log("Mode vol activé");
+                else
+                    Debug.Log("Mode vol désactivé");
+                moveDirection.y = 0f;
+            }
+            lastSpacePressTime = Time.time;
+        }
+
+        if (isFlying)
+        {
+            float currentSpeed = isSprinting ? 35 : 10;
+
+            float flySpeed = currentSpeed; 
+            moveVector = moveVector.normalized * flySpeed;
+
+            if (Input.GetKey(KeyCode.Space))
+            {
+                moveDirection.y = flySpeed;
+            }
+            else if (Input.GetKey(KeyCode.C) || isCrouching)
+            {
+                moveDirection.y = -flySpeed;
+            }
+            else
+            {
+                moveDirection.y = 0f;
+            }
+
+            moveDirection = new Vector3(moveVector.x, moveDirection.y, moveVector.z);
+        }
+        else
+        {
+            if (canJump && Input.GetKeyDown(KeyCode.Space) && !isSliding)
+            {
+                moveDirection.y = jumpSpeed;
+            }
+            else
+            {
+                moveDirection.y -= gravity * Time.deltaTime;
+            }
+
+            moveDirection = new Vector3(moveVector.x, moveDirection.y, moveVector.z);
+        }
+    }
+
+    private void HandleSurvivalMovement(Vector3 moveVector)
+    {
         if (isGrounded || coyoteTimer > 0f)
         {
             if (canJump && Input.GetKeyDown(KeyCode.Space) && !isSliding)
@@ -254,11 +346,7 @@ public partial class FirstPersonController : MonoBehaviour
             moveDirection.y -= gravity * Time.deltaTime;
         }
 
-        if (!isSliding)
-        {
-            moveDirection = new Vector3(moveVector.x, moveDirection.y, moveVector.z);
-            characterController.Move(moveDirection * Time.deltaTime);
-        }
+        moveDirection = new Vector3(moveVector.x, moveDirection.y, moveVector.z);
     }
 
     public void SetControl(bool newState)

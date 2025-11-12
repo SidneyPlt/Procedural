@@ -23,8 +23,7 @@ namespace VTools.RandomService
         [SerializeField] GameObject _dirtPrefab = null;
         [SerializeField] GameObject _arbre = null;
         [SerializeField] GameObject _herbe = null;
-
-        [NonSerialized] GameObject[] _map_block_list = null;
+        [SerializeField] GameObject _Player = null;
 
 
         [Header("general")]
@@ -56,7 +55,7 @@ namespace VTools.RandomService
             await UniTask.Delay(GridGenerator.StepDelay, cancellationToken: cancellationToken);
 
             GenerateMap();
-
+            GeneratePlayer();
         }
         private void GenerateNoise()
         {
@@ -87,7 +86,6 @@ namespace VTools.RandomService
                 noise.SetCellularJitter(_jiter);
             }
 
-            // Gather noise data
             noiseData = new float[Grid.Width, Grid.Lenght];
 
             for (int x = 0; x < Grid.Width; x++)
@@ -101,50 +99,125 @@ namespace VTools.RandomService
 
         private void GenerateMap()
         {
-            GameObject Water = Instantiate(_waterPrefab);
-            Water.transform.localScale = new Vector3(Grid.Width, 1, Grid.Lenght);
-            Water.transform.position = new Vector3(Grid.Width / 2, -4, Grid.Lenght / 2);
+            int[,] finalHeights = new int[Grid.Width, Grid.Lenght];
+            GameObject[,] surfaceMaterials = new GameObject[Grid.Width, Grid.Lenght];
+            bool[,] isLand = new bool[Grid.Width, Grid.Lenght];
 
             for (int x = 0; x < Grid.Width; x++)
             {
                 for (int y = 0; y < Grid.Lenght; y++)
                 {
                     float val = noiseData[x, y];
-
-                    if (val > -0.4)
+                    if (val > -1)
                     {
-                        int valInt = (int)(val * 10);
-                        GameObject blockPrefab = val > -0.2 ? _grassPrefab : _sandPrefab;
+                        finalHeights[x, y] = (int)(val * 10);
+                        surfaceMaterials[x, y] = val > -0.2 ? _grassPrefab : _sandPrefab;
+                        isLand[x, y] = true;
+                    }
+                    else
+                    {
+                        finalHeights[x, y] = -999;
+                        isLand[x, y] = false;
+                    }
+                }
+            }
 
-                        int chanceArbre = RandomService.Range(1, 32);
-                        if (blockPrefab == _grassPrefab && chanceArbre == 1)
+            for (int x = 0; x < Grid.Width; x++)
+            {
+                for (int y = 0; y < Grid.Lenght; y++)
+                {
+                    if (finalHeights[x, y] == -999) continue;
+
+                    int surfaceHeight = finalHeights[x, y];
+                    GameObject surfacePrefab = surfaceMaterials[x, y];
+
+                    if (surfacePrefab == _grassPrefab)
+                    {
+                        GenerateVegetation(x, y, surfaceHeight);
+                    }
+
+                    Instantiate(surfacePrefab).transform.position = new Vector3(x, surfaceHeight, y);
+
+                    int maxDifference = 0;
+                    for (int i = 0; i < 4; i++)
+                    {
+                        int nx = x + (i == 0 ? 1 : (i == 1 ? -1 : 0));
+                        int ny = y + (i == 2 ? 1 : (i == 3 ? -1 : 0));
+
+                        if (nx >= 0 && nx < Grid.Width && ny >= 0 && ny < Grid.Lenght && finalHeights[nx, ny] != -999)
                         {
-                            float posArbre = ((float)valInt+1) - 0.2f;
-                            Instantiate(_arbre);
-                            _arbre.transform.localPosition = new Vector3(x, posArbre, y);
-                            _herbe.transform.localScale = new Vector3(1, 2.5f, 1);
-                        }
-                        else if(blockPrefab == _grassPrefab && chanceArbre != 1)
-                        {
-                            int chanceherbe = RandomService.Range(1, 10);
-                            if (chanceherbe == 1)
+                            int difference = surfaceHeight - finalHeights[nx, ny];
+                            if (difference > maxDifference)
                             {
-                                float posherbe = ((float)valInt) + 0.5f;
-                                Instantiate(_herbe);
-                                _herbe.transform.localPosition = new Vector3(x, posherbe, y);
-                                _herbe.transform.localScale = new Vector3(2.5f, 2.2f, 2.5f);
-                                _herbe.transform.localRotation = new Quaternion(0, RandomService.Range(0, 359), 0, 0);
+                                maxDifference = difference;
                             }
-                            
                         }
+                    }
 
-                        for (int height = valInt; height >= valInt - 1; height--)
+                    if (maxDifference > 1)
+                    {
+                        GameObject fillMaterial = surfacePrefab == _sandPrefab ? _sandPrefab : _dirtPrefab;
+
+                        for (int height = surfaceHeight - 1; height > surfaceHeight - maxDifference; height--)
                         {
-                            GameObject newBlock = Instantiate(blockPrefab);
-                            newBlock.transform.position = new Vector3(x, height, y);
+                            Instantiate(fillMaterial).transform.position = new Vector3(x, height, y);
                         }
                     }
                 }
+            }
+
+            for (int x = 0; x < Grid.Width; x++)
+            {
+                for (int y = 0; y < Grid.Lenght; y++)
+                {
+                    bool hasLandAtWaterLevel = isLand[x, y] && finalHeights[x, y] == -4;
+
+                    bool hasLandBelow = isLand[x, y] && finalHeights[x, y] < -4;
+
+                    if (!hasLandAtWaterLevel && hasLandBelow)
+                    {
+                        GameObject waterBlock = Instantiate(_waterPrefab);
+                        waterBlock.transform.position = new Vector3(x, -3.6f, y);
+                    }
+                }
+            }
+        }
+
+        private void GenerateVegetation(int x, int y, int surfaceHeight)
+        {
+            int chanceArbre = RandomService.Range(1, 32);
+            if (chanceArbre == 1)
+            {
+                GameObject arbre = Instantiate(_arbre);
+                arbre.transform.position = new Vector3(x, surfaceHeight + 0.8f, y);
+                return; 
+            }
+
+            int chanceherbe = RandomService.Range(1, 10);
+            if (chanceherbe == 1)
+            {
+                GameObject herbe = Instantiate(_herbe);
+                herbe.transform.position = new Vector3(x, surfaceHeight + 0.5f, y);
+                herbe.transform.localScale = new Vector3(2.5f, 2.2f, 2.5f);
+                herbe.transform.rotation = Quaternion.Euler(0, RandomService.Range(0, 359), 0);
+            }
+            
+        }
+
+        private void GeneratePlayer()
+        {
+            bool isValidEmplacement = false;
+            int i = 0;
+
+            while(isValidEmplacement == false) 
+            { 
+                
+
+
+
+
+
+                isValidEmplacement = true;
             }
         }
     }
