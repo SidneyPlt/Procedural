@@ -25,7 +25,6 @@ namespace VTools.RandomService
         [SerializeField] GameObject _herbe = null;
         [SerializeField] GameObject _Player = null;
 
-
         [Header("general")]
         [SerializeField] FastNoiseLite.NoiseType _nois_type = FastNoiseLite.NoiseType.OpenSimplex2;
         [SerializeField] FastNoiseLite.RotationType3D _rota_3d = FastNoiseLite.RotationType3D.None;
@@ -55,8 +54,13 @@ namespace VTools.RandomService
             await UniTask.Delay(GridGenerator.StepDelay, cancellationToken: cancellationToken);
 
             GenerateMap();
-            GeneratePlayer();
         }
+
+        void fixedUpdate()
+        {
+            UpdateMap();
+        }
+
         private void GenerateNoise()
         {
             FastNoiseLite noise = new FastNoiseLite();
@@ -99,6 +103,7 @@ namespace VTools.RandomService
 
         private void GenerateMap()
         {
+            bool isValidEmplacement = false;
             int[,] finalHeights = new int[Grid.Width, Grid.Lenght];
             GameObject[,] surfaceMaterials = new GameObject[Grid.Width, Grid.Lenght];
             bool[,] isLand = new bool[Grid.Width, Grid.Lenght];
@@ -163,6 +168,8 @@ namespace VTools.RandomService
                             Instantiate(fillMaterial).transform.position = new Vector3(x, height, y);
                         }
                     }
+
+                   
                 }
             }
 
@@ -170,8 +177,15 @@ namespace VTools.RandomService
             {
                 for (int y = 0; y < Grid.Lenght; y++)
                 {
-                    bool hasLandAtWaterLevel = isLand[x, y] && finalHeights[x, y] == -4;
 
+                    if (surfaceMaterials[x, y] == _grassPrefab && isValidEmplacement == false && x > Grid.Width / 2 && y > Grid.Lenght / 2)
+                    {
+                        GameObject player = Instantiate(_Player);
+                        player.transform.position = new Vector3(x, 20, y);
+                        isValidEmplacement = true;
+                    }
+
+                    bool hasLandAtWaterLevel = isLand[x, y] && finalHeights[x, y] == -4;
                     bool hasLandBelow = isLand[x, y] && finalHeights[x, y] < -4;
 
                     if (!hasLandAtWaterLevel && hasLandBelow)
@@ -179,7 +193,7 @@ namespace VTools.RandomService
                         GameObject waterBlock = Instantiate(_waterPrefab);
                         waterBlock.transform.position = new Vector3(x, -3.6f, y);
                     }
-                }
+                }  
             }
         }
 
@@ -204,21 +218,10 @@ namespace VTools.RandomService
             
         }
 
-        private void GeneratePlayer()
+        void UpdateMap() 
         {
-            bool isValidEmplacement = false;
-            int i = 0;
 
-            while(isValidEmplacement == false) 
-            { 
-                
-
-
-
-
-
-                isValidEmplacement = true;
-            }
         }
+
     }
 }
