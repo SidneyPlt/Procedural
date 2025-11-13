@@ -21,7 +21,7 @@ MonoBehaviour:
   _arbre: {fileID: 100000, guid: 086866415dea3c64bb043c7b9c5d5a28, type: 3}
   _herbe: {fileID: 100000, guid: 2b44582523d7fdf48ae9a30dd4e38897, type: 3}
   _Player: {fileID: 9156347144040445547, guid: c82236c16aae9d34fbd437f8dea6e2c9, type: 3}
-  _viewDistance: 45
+  _viewDistance: 60
   _nois_type: 0
   _rota_3d: 0
   _speed: 1

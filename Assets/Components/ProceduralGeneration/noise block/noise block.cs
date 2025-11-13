@@ -22,7 +22,9 @@ namespace VTools.RandomService
         [SerializeField] GameObject _arbre = null;
         [SerializeField] GameObject _herbe = null;
         [SerializeField] GameObject _Player = null;
+        [SerializeField] GameObject _Blocks = null;
         [SerializeField] int _viewDistance = 10;
+        
 
         [Header("general")]
         [SerializeField] FastNoiseLite.NoiseType _nois_type = FastNoiseLite.NoiseType.OpenSimplex2;
@@ -51,10 +53,11 @@ namespace VTools.RandomService
         private GameObject _playerInstance;
         private Vector2Int _lastPlayerPos;
 
-        // Données précalculées
         private int[,] _finalHeights;
         private GameObject[,] _surfaceMaterials;
         private bool[,] _isLand;
+
+        public Transform BlocksContainer { get => _BlocksContainer; set => _BlocksContainer = value; }
 
         protected override async UniTask ApplyGeneration(CancellationToken cancellationToken)
         {
@@ -62,9 +65,8 @@ namespace VTools.RandomService
             await UniTask.Delay(GridGenerator.StepDelay, cancellationToken: cancellationToken);
 
             PrecalculateMapData();
-            GenerateInitialMap();
+            GenerateCompleteMap(); 
 
-            // Démarrer la mise à jour
             StartMapUpdate();
         }
 
@@ -133,81 +135,32 @@ namespace VTools.RandomService
             }
         }
 
-        private void GenerateInitialMap()
+        private void GenerateCompleteMap()
         {
-            Vector2Int center = new Vector2Int(Grid.Width / 2, Grid.Lenght / 2);
-            GenerateMapArea(center.x - _viewDistance, center.x + _viewDistance,
-                           center.y - _viewDistance, center.y + _viewDistance, true);
-        }
+            GameObject grassPrefab = _grassPrefab;
 
-        private async void StartMapUpdate()
-        {
-            while (true)
+            for (int x = 0; x < Grid.Width; x++)
             {
-                await UniTask.Delay(100);
-                if (_playerInstance != null)
-                {
-                    Vector2Int currentPos = new Vector2Int(
-                        Mathf.RoundToInt(_playerInstance.transform.position.x),
-                        Mathf.RoundToInt(_playerInstance.transform.position.z)
-                    );
-
-                    if (Vector2Int.Distance(currentPos, _lastPlayerPos) > 1f)
-                    {
-                        UpdateMapAroundPlayer(currentPos);
-                        _lastPlayerPos = currentPos;
-                    }
-                }
-            }
-        }
-
-        private void UpdateMapAroundPlayer(Vector2Int playerPos)
-        {
-            // Montrer/cacher les blocs autour du joueur
-            int startX = Mathf.Clamp(playerPos.x - _viewDistance, 0, Grid.Width - 1);
-            int endX = Mathf.Clamp(playerPos.x + _viewDistance, 0, Grid.Width - 1);
-            int startY = Mathf.Clamp(playerPos.y - _viewDistance, 0, Grid.Lenght - 1);
-            int endY = Mathf.Clamp(playerPos.y + _viewDistance, 0, Grid.Lenght - 1);
-
-            // Générer les nouveaux blocs
-            GenerateMapArea(startX, endX, startY, endY, false);
-
-            // Cacher les blocs loin du joueur
-            HideDistantBlocks(playerPos);
-        }
-
-        private void GenerateMapArea(int startX, int endX, int startY, int endY, bool isInitial)
-        {
-            // Première passe : blocs de surface et remplissage
-            for (int x = startX; x <= endX; x++)
-            {
-                for (int y = startY; y <= endY; y++)
+                for (int y = 0; y < Grid.Lenght; y++)
                 {
                     if (_finalHeights[x, y] == -999) continue;
 
                     int surfaceHeight = _finalHeights[x, y];
                     GameObject surfacePrefab = _surfaceMaterials[x, y];
 
-                    // Bloc de surface
                     Vector3Int surfacePos = new Vector3Int(x, surfaceHeight, y);
                     if (!_allBlocks.ContainsKey(surfacePos))
                     {
-                        GameObject block = Instantiate(surfacePrefab);
+                        GameObject block = Instantiate(surfacePrefab, BlocksContainer);
                         block.transform.position = new Vector3(x, surfaceHeight, y);
                         _allBlocks[surfacePos] = block;
 
-                        // Végétation
-                        if (surfacePrefab == _grassPrefab)
+                        if (surfacePrefab == grassPrefab)
                         {
                             GenerateVegetation(x, y, surfaceHeight);
                         }
                     }
-                    else
-                    {
-                        _allBlocks[surfacePos].SetActive(true);
-                    }
 
-                    // Blocs de remplissage pour les pentes
                     int maxDifference = 0;
                     for (int i = 0; i < 4; i++)
                     {
@@ -233,52 +186,90 @@ namespace VTools.RandomService
                             Vector3Int fillPos = new Vector3Int(x, height, y);
                             if (!_allBlocks.ContainsKey(fillPos))
                             {
-                                GameObject fillBlock = Instantiate(fillMaterial);
+                                GameObject fillBlock = Instantiate(fillMaterial, BlocksContainer);
                                 fillBlock.transform.position = new Vector3(x, height, y);
                                 _allBlocks[fillPos] = fillBlock;
-                            }
-                            else
-                            {
-                                _allBlocks[fillPos].SetActive(true);
                             }
                         }
                     }
                 }
             }
 
-            // Deuxième passe : eau et joueur
-            for (int x = startX; x <= endX; x++)
+            for (int x = 0; x < Grid.Width; x++)
             {
-                for (int y = startY; y <= endY; y++)
+                for (int y = 0; y < Grid.Lenght; y++)
                 {
-                    // Joueur (seulement au début)
-                    if (isInitial && _surfaceMaterials[x, y] == _grassPrefab && x > Grid.Width / 2 && y > Grid.Lenght / 2 && _playerInstance == null)
-                    {
-                        _playerInstance = Instantiate(_Player);
-                        _playerInstance.transform.position = new Vector3(x, 20, y);
-                        _lastPlayerPos = new Vector2Int(x, y);
-                    }
-
-                    // Eau
                     bool hasLandAtWaterLevel = _isLand[x, y] && _finalHeights[x, y] == -4;
                     bool hasLandBelow = _isLand[x, y] && _finalHeights[x, y] < -4;
 
                     if (!hasLandAtWaterLevel && hasLandBelow)
                     {
-                        Vector3Int waterPos = new Vector3Int(x, -4, y); // Position fixe pour l'eau
+                        Vector3Int waterPos = new Vector3Int(x, -4, y);
                         if (!_allBlocks.ContainsKey(waterPos))
                         {
-                            GameObject waterBlock = Instantiate(_waterPrefab);
+                            GameObject waterBlock = Instantiate(_waterPrefab, BlocksContainer);
                             waterBlock.transform.position = new Vector3(x, -3.6f, y);
                             _allBlocks[waterPos] = waterBlock;
-                        }
-                        else
-                        {
-                            _allBlocks[waterPos].SetActive(true);
                         }
                     }
                 }
             }
+
+            Vector2Int playerSpawnPos = FindPlayerSpawnPosition();
+            _playerInstance = Instantiate(_Player);
+            _playerInstance.transform.position = new Vector3(playerSpawnPos.x, _finalHeights[playerSpawnPos.x, playerSpawnPos.y] + 2, playerSpawnPos.y);
+            _lastPlayerPos = playerSpawnPos;
+
+            HideDistantBlocks(_lastPlayerPos);
+        }
+
+        private Vector2Int FindPlayerSpawnPosition()
+        {
+
+            Vector2Int center = new Vector2Int(Grid.Width / 2, Grid.Lenght / 2);
+
+            for (int radius = 0; radius < Mathf.Min(Grid.Width, Grid.Lenght) / 2; radius++)
+            {
+                for (int x = center.x - radius; x <= center.x + radius; x++)
+                {
+                    for (int y = center.y - radius; y <= center.y + radius; y++)
+                    {
+                        if (x >= 0 && x < Grid.Width && y >= 0 && y < Grid.Lenght &&
+                            _surfaceMaterials[x, y] == _grassPrefab)
+                        {
+                            return new Vector2Int(x, y);
+                        }
+                    }
+                }
+            }
+
+            return center;
+        }
+
+        private async void StartMapUpdate()
+        {
+            while (true)
+            {
+                await UniTask.Delay(100);
+                if (_playerInstance != null)
+                {
+                    Vector2Int currentPos = new Vector2Int(
+                        Mathf.RoundToInt(_playerInstance.transform.position.x),
+                        Mathf.RoundToInt(_playerInstance.transform.position.z)
+                    );
+
+                    if (Vector2Int.Distance(currentPos, _lastPlayerPos) > 1f)
+                    {
+                        UpdateMapAroundPlayer(currentPos);
+                        _lastPlayerPos = currentPos;
+                    }
+                }
+            }
+        }
+
+        private void UpdateMapAroundPlayer(Vector2Int playerPos)
+        {
+            HideDistantBlocks(playerPos);
         }
 
         private void HideDistantBlocks(Vector2Int playerPos)
@@ -288,13 +279,16 @@ namespace VTools.RandomService
                 Vector3Int blockPos = block.Key;
                 float distance = Vector2Int.Distance(playerPos, new Vector2Int(blockPos.x, blockPos.z));
 
-                if (distance > _viewDistance)
+                if (distance <= _viewDistance)
+                {
+                    block.Value.SetActive(true);
+                }
+                else
                 {
                     block.Value.SetActive(false);
                 }
             }
 
-            // Cacher aussi la végétation
             foreach (var vegList in _vegetation.Values)
             {
                 foreach (var plant in vegList)
