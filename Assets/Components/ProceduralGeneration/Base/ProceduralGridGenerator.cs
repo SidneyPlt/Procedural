@@ -17,13 +17,11 @@ namespace Components.ProceduralGeneration
         
         public override void GenerateGrid()
         {
-            // Generate grid base data.
             base.GenerateGrid();
 
             if (_drawDebug)
                 Grid.DrawGridDebug();
             
-            // Apply generation.
             ApplyGeneration();
         }
 
